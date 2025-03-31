@@ -1,8 +1,8 @@
 use criterion::measurement::Measurement;
-use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, criterion_main};
 use criterion_cycles_per_byte::CyclesPerByte;
 use hybrid_array::{Array, ArraySize};
-use ml_dsa::{B32, KeyGen, MlDsa65, Signature, SigningKey, VerifyingKey};
+use ml_dsa::{B32, KeyGen, MlDsa44, Signature, SigningKey, VerifyingKey};
 use rand::CryptoRng;
 
 pub fn rand<L: ArraySize, R: CryptoRng + ?Sized>(rng: &mut R) -> Array<u8, L> {
@@ -24,7 +24,7 @@ fn criterion_benchmark<M: Measurement>(c: &mut Criterion<M>) {
                 xi
             },
             |xi| {
-                let kp = MlDsa65::key_gen_internal(&xi);
+                let kp = MlDsa44::key_gen_internal(&xi);
                 let _sk_bytes = kp.signing_key().encode();
                 let _vk_bytes = kp.verifying_key().encode();
             },
@@ -40,14 +40,14 @@ fn criterion_benchmark<M: Measurement>(c: &mut Criterion<M>) {
                 let m: B32 = rand(&mut rng);
                 let ctx: B32 = rand(&mut rng);
 
-                let kp = MlDsa65::key_gen_internal(&xi);
+                let kp = MlDsa44::key_gen_internal(&xi);
                 let sk = kp.signing_key();
 
                 let sk_bytes = sk.encode();
                 (sk_bytes, m, ctx)
             },
             |(sk_bytes, m, ctx)| {
-                let sk = SigningKey::<MlDsa65>::decode(&sk_bytes);
+                let sk = SigningKey::<MlDsa44>::decode(&sk_bytes);
                 sk.sign_deterministic(&m, &ctx)
             },
             BatchSize::SmallInput,
@@ -62,7 +62,7 @@ fn criterion_benchmark<M: Measurement>(c: &mut Criterion<M>) {
                 let m: B32 = rand(&mut rng);
                 let ctx: B32 = rand(&mut rng);
 
-                let kp = MlDsa65::key_gen_internal(&xi);
+                let kp = MlDsa44::key_gen_internal(&xi);
                 let sk = kp.signing_key();
                 let vk = kp.verifying_key();
                 let sig = sk.sign_deterministic(&m, &ctx).unwrap();
@@ -72,8 +72,8 @@ fn criterion_benchmark<M: Measurement>(c: &mut Criterion<M>) {
                 (vk_bytes, sig_bytes, m, ctx)
             },
             |(vk_bytes, sig_bytes, m, ctx)| {
-                let vk = VerifyingKey::<MlDsa65>::decode(&vk_bytes);
-                let sig = Signature::<MlDsa65>::decode(&sig_bytes).unwrap();
+                let vk = VerifyingKey::<MlDsa44>::decode(&vk_bytes);
+                let sig = Signature::<MlDsa44>::decode(&sig_bytes).unwrap();
                 vk.verify_with_context(&m, &ctx, &sig)
             },
             BatchSize::SmallInput,
@@ -91,7 +91,7 @@ fn criterion_benchmark<M: Measurement>(c: &mut Criterion<M>) {
                 (xi, m, ctx)
             },
             |(xi, m, ctx)| {
-                let kp = MlDsa65::key_gen_internal(&xi);
+                let kp = MlDsa44::key_gen_internal(&xi);
                 let sig = kp.signing_key().sign_deterministic(&m, &ctx).unwrap();
                 kp.verifying_key().verify_with_context(&m, &ctx, &sig)
             },
